@@ -1,0 +1,20 @@
+version: 0.0
+os: linux
+
+files:
+  - source: ./webapp/target/webApplication-0.0.1-SNAPSHOT.jar
+    destination: /tmp
+  - source: ./app_stop.sh
+    destination: /home/centos
+  - source: ./applicationStart.sh
+    destination: /home/centos
+
+hooks:
+  ApplicationStop:
+    - location: ./app_stop.sh
+      timeout: 180
+      runas: centos
+  ApplicationStart:
+    - location: ./applicationStart.sh
+      timeout: 180
+      runas: centos

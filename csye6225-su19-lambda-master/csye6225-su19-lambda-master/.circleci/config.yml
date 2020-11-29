@@ -1,0 +1,37 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    steps:
+      - checkout
+      - run:
+          name: Build Gradle Artifact
+          command: |
+            cd com.neu.csye6225.lambda
+            gradle build
+      - run:
+          name: Package 
+          command: |
+            mkdir -p lambda_artifact
+            mv com.neu.csye6225.lambda/build/distributions/com.neu.csye6225.lambda-0.0.1.zip com.neu.csye6225.lambda/build/distributions/com.neu.csye6225.lambda-${CIRCLE_BUILD_NUM}.zip
+            mv com.neu.csye6225.lambda/build/distributions/com.neu.csye6225.lambda-${CIRCLE_BUILD_NUM}.zip lambda_artifact/
+      - run:
+          name: Install awscli
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y awscli
+            aws --version
+            aws configure set aws_access_key_id ${AWS_ACCESS_KEY_ID}
+            aws configure set aws_secret_access_key ${AWS_SECRET_ACCESS_KEY}
+            aws configure set region ${AWS_REGION}
+      - run:
+          name: Deploy
+          command: |
+            aws s3 sync lambda_artifact s3://${LAMBDA_S3_BUCKET_NAME}
+      - run:
+          name: Update Lambda Function
+          command: |
+            aws lambda update-function-code --function-name ${APP_STACK_NAME} --s3-bucket ${LAMBDA_S3_BUCKET_NAME} --s3-key com.neu.csye6225.lambda-${CIRCLE_BUILD_NUM}.zip
+
+      
